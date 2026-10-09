@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Учёт отработок общежития</title>
+
+    <link rel="stylesheet" href="sait.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="header-left">
+
+            <div class="logo">
+                🏢
+            </div>
+
+            <div>
+                <div class="site-title">
+                    Учёт отработок
+                </div>
+
+                <div class="site-subtitle">
+                    общежития
+                </div>
+            </div>
+
+        </div>
+
+        <div class="theme-controls">
+            <button id="themeBtn" class="theme-btn" type="button" aria-expanded="false" aria-controls="themePanel">
+                🎨 Темы
+            </button>
+
+            <div id="themePanel" class="theme-panel hidden">
+                <label for="themeSelect">Цветовая тема</label>
+                <select id="themeSelect">
+                    <option value="dark">🌌 Тёмно-синяя</option>
+                    <option value="light">☀️ Светлая</option>
+                    <option value="forest">🌿 Лесная</option>
+                    <option value="sunset">🌅 Закат</option>
+                    <option value="rose">🌸 Розовая</option>
+                </select>
+
+                <label for="accentColor">Свой акцентный цвет</label>
+                <div class="custom-color-row">
+                    <input id="accentColor" type="color" value="#7657ff" aria-label="Выбрать акцентный цвет">
+                    <span>Кнопки и выделения</span>
+                </div>
+                <button id="resetAccentColor" class="btn btn-secondary" type="button">Сбросить цвет кнопок</button>
+
+                <div class="theme-customizer-divider"></div>
+                <label for="backgroundColor">Кастомизировать фон</label>
+                <div class="custom-color-row">
+                    <input id="backgroundColor" type="color" value="#28172f" aria-label="Выбрать цвет фона">
+                    <span>Цвет фона сайта</span>
+                </div>
+                <button id="resetBackgroundColor" class="btn btn-secondary" type="button">Сбросить фон</button>
+
+                <div class="theme-customizer-divider"></div>
+                <label for="panelColor">Цвет панелей</label>
+                <div class="custom-color-row">
+                    <input id="panelColor" type="color" value="#172d2b" aria-label="Выбрать цвет панелей">
+                    <span>Карточки и разделы</span>
+                </div>
+                <button id="resetPanelColor" class="btn btn-secondary" type="button">Сбросить цвет панелей</button>
+
+                <div class="theme-customizer-divider"></div>
+                <div class="theme-section-title">🖼️ Фоновая картинка</div>
+                <label class="file-picker-button" for="backgroundImageInput">
+                    <span class="file-picker-icon">↥</span>
+                    <span class="file-picker-copy"><strong>Выбрать изображение</strong><small id="backgroundImageFileName">JPG, PNG, WEBP · до 2 МБ</small></span>
+                </label>
+                <input id="backgroundImageInput" class="background-image-input" type="file" accept="image/*" aria-label="Загрузить картинку для фона">
+                <button id="resetBackgroundImage" class="btn btn-secondary" type="button">Убрать картинку</button>
+
+                <div class="theme-customizer-divider"></div>
+                <label for="textColor">Цвет текста</label>
+                <div class="custom-color-row">
+                    <input id="textColor" type="color" value="#f3f5ff" aria-label="Выбрать цвет текста">
+                    <span>Заголовки и надписи</span>
+                </div>
+                <button id="resetTextColor" class="btn btn-secondary" type="button">Сбросить цвет текста</button>
+
+                <div class="theme-customizer-divider"></div>
+                <label for="fontFamilySelect">Шрифт сайта</label>
+                <select id="fontFamilySelect" class="font-family-select">
+                    <option value="system">Системный</option>
+                    <option value="arial">Arial</option>
+                    <option value="verdana">Verdana</option>
+                    <option value="georgia">Georgia</option>
+                    <option value="trebuchet">Trebuchet MS</option>
+                    <option value="tahoma">Tahoma</option>
+                    <option value="monospace">Моноширинный</option>
+                </select>
+                <button id="resetFontFamily" class="btn btn-secondary" type="button">Сбросить шрифт</button>
+            </div>
+        </div>
+
+        <div class="header-user">
+
+            <div id="userInfo" class="user-info hidden">
+                <span id="userIcon">👤</span>
+                <span id="userName"></span>
+            </div>
+
+            <button id="accountSettingsBtn" class="btn btn-secondary hidden" type="button">⚙️ Настройки</button>
+
+            <button id="loginBtn" class="btn btn-primary" type="button">
+                Войти
+            </button>
+
+            <button id="logoutBtn" class="btn btn-danger hidden" type="button">
+                Выйти
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- НЕ АВТОРИЗОВАН -->
+
+        <section id="notLogged" class="welcome-section">
+
+            <div class="welcome-card">
+
+                <div class="welcome-icon">
+                    🔐
+                </div>
+
+                <h1>
+                    Учёт отработок
+                </h1>
+
+                <p>
+                    Войдите в систему, чтобы посмотреть свои отработки.
+                </p>
+
+                <button id="loginBtnMain" class="btn btn-primary" type="button">
+                    Войти в профиль
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- АВТОРИЗОВАН -->
+
+        <section id="mainContent" class="hidden">
+
+            <!-- ================= RESIDENT AREA ================= -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <h1>
+                            Отработки жильцов
+                        </h1>
+
+                        <p>
+                            Учёт назначенных и выполненных часов
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- Необязательные уведомления Telegram: отображаются только жильцам -->
+                <section class="workspace-card telegram-connect-card hidden" id="telegramConnectCard" aria-live="polite">
+                    <div class="workspace-heading">
+                        <div><h2>✈️ Уведомления в Telegram</h2><p>Подключай по желанию. Без Telegram сайт продолжает работать как обычно.</p></div>
+                    </div>
+                    <p id="telegramConnectStatus" class="muted">Проверяем подключение…</p>
+                    <div class="telegram-actions">
+                        <button id="connectTelegramBtn" class="btn btn-primary" type="button">Подключить Telegram</button>
+                        <button id="disconnectTelegramBtn" class="btn btn-secondary hidden" type="button">Отключить Telegram</button>
+                    </div>
+                </section>
+
+                <!-- УВЕДОМЛЕНИЯ И ЗАДАНИЯ ДЛЯ ЖИЛЬЦОВ -->
+                <section class="resident-workspace">
+                    <div class="workspace-card notifications-card">
+                        <div class="workspace-heading">
+                            <div><h2>🔔 Уведомления</h2><p>Назначения, списания часов и новости о заданиях</p></div>
+                            <button id="markNotificationsRead" class="btn btn-secondary" type="button">Прочитать все</button>
+                        </div>
+                        <div id="notificationsList" class="notifications-list"><p class="muted">Загрузка уведомлений…</p></div>
+                    </div>
+                    <div class="workspace-card tasks-card">
+                        <div class="workspace-heading">
+                            <div><h2>🧰 Задания для бронирования</h2><p>Выбери свободное задание и забронируй его</p></div>
+                            <button id="refreshTasksBtn" class="btn btn-secondary" type="button">Обновить</button>
+                        </div>
+                        <div id="residentTasksList" class="resident-tasks-list"><p class="muted">Загрузка заданий…</p></div>
+                    </div>
+                </section>
+
+                <!-- ================= ADMIN ================= -->
+
+                <section id="adminPanel" class="admin-panel hidden">
+
+                    <div class="section-title">
+                        <span>⚙️</span>
+                        Панель администратора
+                    </div>
+
+                    <div class="admin-card publish-task-card">
+                        <h2>📣 Опубликовать задание для бронирования</h2>
+                        <p class="section-description">Задание появится у жильцов в списке свободных работ.</p>
+                        <form id="publishTaskForm" class="form-grid">
+                            <div class="form-group"><label for="publicTaskTitle">Название задания</label><input id="publicTaskTitle" maxlength="100" placeholder="Например: уборка кухни" required></div>
+                            <div class="form-group"><label for="publicTaskHours">Часы</label><input id="publicTaskHours" type="number" min="0.5" step="0.5" value="2" required></div>
+                            <div class="form-group"><label for="publicTaskCapacity">Сколько жильцов могут забронировать</label><input id="publicTaskCapacity" type="number" min="1" max="100" step="1" value="1" required><small class="field-hint">Каждому участнику будут зачтены часы задания.</small></div>
+                            <div class="form-group"><label for="publicTaskDetails">Описание / место / комментарий</label><input id="publicTaskDetails" maxlength="500" placeholder="Например: кухня на 3 этаже"></div>
+                            <div class="form-group"><label for="publicTaskDate">Дата выполнения (необязательно)</label><input id="publicTaskDate" type="date"></div>
+                            <div class="form-group"><label for="publicTaskTime">Время выполнения (необязательно)</label><input id="publicTaskTime" type="time"></div>
+                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Опубликовать задание</button></div>
+                        </form>
+                        <div id="publishTaskMessage" class="form-message"></div>
+                    </div>
+
+                    <!-- ADD STUDENT -->
+
+                    <div class="admin-card">
+
+                        <h2>
+                            ➕ Добавить жильца
+                        </h2>
+
+                        <form id="addStudentForm" class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="addNickname">
+                                    Ник
+                                </label>
+
+                                <input
+                                    id="addNickname"
+                                    type="text"
+                                    maxlength="30"
+                                    autocomplete="off"
+                                    placeholder="Например: danila"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="addPassword">
+                                    Пароль
+                                </label>
+
+                                <input
+                                    id="addPassword"
+                                    type="password"
+                                    minlength="6"
+                                    placeholder="Минимум 6 символов"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="addName">
+                                    ФИО
+                                </label>
+
+                                <input
+                                    id="addName"
+                                    type="text"
+                                    placeholder="Фамилия Имя"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="addRoom">
+                                    Комната
+                                </label>
+
+                                <input
+                                    id="addRoom"
+                                    type="text"
+                                    placeholder="304"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-actions">
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-success"
+                                >
+                                    Добавить жильца
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <div id="addStudentMessage" class="form-message"></div>
+
+                    </div>
+
+
+                    <!-- ASSIGN HOURS -->
+
+                    <div class="admin-card">
+
+                        <h2>
+                            📋 Назначить отработку
+                        </h2>
+
+                        <form id="assignHoursForm">
+
+                            <div class="form-group">
+
+                                <label>
+                                    Жилец
+                                </label>
+
+                                <!-- CUSTOM PICKER -->
+
+                                <div
+                                    class="resident-picker"
+                                    id="assignPicker"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="resident-picker-button"
+                                    >
+                                        <span class="picker-selected-text">
+                                            Выберите жильца
+                                        </span>
+
+                                        <span class="picker-arrow">
+                                            ▼
+                                        </span>
+                                    </button>
+
+
+                                    <div class="resident-picker-dropdown">
+
+                                        <div class="picker-search">
+
+                                            <span>
+                                                🔎
+                                            </span>
+
+                                            <input
+                                                type="search"
+                                                class="picker-search-input"
+                                                placeholder="Поиск по имени или комнате..."
+                                                autocomplete="off"
+                                            >
+
+                                        </div>
+
+
+                                        <div class="picker-options">
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- Скрытый select для совместимости с JS -->
+
+                                <select
+                                    id="assignStudentSelect"
+                                    class="hidden-select"
+                                    required
+                                >
+                                    <option value="">
+                                        Выберите жильца
+                                    </option>
+                                </select>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="assignReason">
+                                    Причина
+                                </label>
+
+                                <input
+                                    id="assignReason"
+                                    type="text"
+                                    placeholder="Например: дежурство"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="assignHours">
+                                    Количество часов
+                                </label>
+
+                                <input
+                                    id="assignHours"
+                                    type="number"
+                                    min="0.5"
+                                    step="0.5"
+                                    placeholder="2"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+                                Назначить
+                            </button>
+
+                        </form>
+
+                        <div id="assignMessage" class="form-message"></div>
+
+                    </div>
+
+
+                    <!-- COMPLETE HOURS -->
+
+                    <div class="admin-card">
+
+                        <h2>
+                            ✅ Отметить выполнение
+                        </h2>
+
+                        <form id="completeHoursForm">
+
+                            <div class="form-group">
+
+                                <label>
+                                    Жилец
+                                </label>
+
+
+                                <div
+                                    class="resident-picker"
+                                    id="completePicker"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="resident-picker-button"
+                                    >
+
+                                        <span class="picker-selected-text">
+                                            Выберите жильца
+                                        </span>
+
+                                        <span class="picker-arrow">
+                                            ▼
+                                        </span>
+
+                                    </button>
+
+
+                                    <div class="resident-picker-dropdown">
+
+                                        <div class="picker-search">
+
+                                            <span>
+                                                🔎
+                                            </span>
+
+                                            <input
+                                                type="search"
+                                                class="picker-search-input"
+                                                placeholder="Поиск по имени или комнате..."
+                                                autocomplete="off"
+                                            >
+
+                                        </div>
+
+
+                                        <div class="picker-options">
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <select
+                                    id="completeStudentSelect"
+                                    class="hidden-select"
+                                    required
+                                >
+                                    <option value="">
+                                        Выберите жильца
+                                    </option>
+                                </select>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="completeHours">
+                                    Количество часов
+                                </label>
+
+                                <input
+                                    id="completeHours"
+                                    type="number"
+                                    min="0.5"
+                                    step="0.5"
+                                    placeholder="2"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-success"
+                            >
+                                Отметить выполнение
+                            </button>
+
+                        </form>
+
+                        <div id="completeMessage" class="form-message"></div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ================= STUDENTS ================= -->
+
+                <section class="students-section">
+
+                    <div class="section-title">
+                        <span>👥</span>
+                        Жильцы
+                    </div>
+
+                    <div class="section-description">
+                        Текущий баланс отработок
+                    </div>
+
+
+                    <div class="table-tools">
+
+                        <button
+                            id="historyToggle"
+                            type="button"
+                            class="btn btn-secondary"
+                        >
+
+                            <span id="historyToggleText">
+                                Показать историю
+                            </span>
+
+                            <span id="historyArrow">
+                                ▼
+                            </span>
+
+                        </button>
+
+
+                        <div class="search-wrapper">
+
+                            <span class="search-icon">
+                                🔎
+                            </span>
+
+                            <input
+                                id="studentSearch"
+                                type="search"
+                                placeholder="Поиск по фамилии или имени..."
+                                autocomplete="off"
+                            >
+
+                            <button
+                                id="studentSearchClear"
+                                type="button"
+                                class="search-clear hidden"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+                        <div
+                            id="studentSearchInfo"
+                            class="search-info"
+                        ></div>
+
+                    </div>
+
+
+                    <!-- STUDENTS TABLE -->
+
+                    <div class="table-wrapper">
+
+                        <table id="studentsTable">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        КОМНАТА
+                                    </th>
+
+                                    <th>
+                                        ФИО
+                                    </th>
+
+                                    <th>
+                                        НАЗНАЧЕНО
+                                    </th>
+
+                                    <th>
+                                        ОТРАБОТАНО
+                                    </th>
+
+                                    <th>
+                                        ДОЛГ
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="studentsTableBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- ================= HISTORY ================= -->
+
+                    <div
+                        id="historyContent"
+                        class="history-content hidden"
+                    >
+
+                        <div class="history-header">
+
+                            <h2>
+                                История отработок
+                            </h2>
+
+                        </div>
+
+                        <div class="history-search-tools">
+                            <div class="search-wrapper">
+                                <span class="search-icon">🔎</span>
+                                <input
+                                    id="historySearch"
+                                    type="search"
+                                    placeholder="Поиск в истории по имени или фамилии..."
+                                    autocomplete="off"
+                                >
+                                <button
+                                    id="historySearchClear"
+                                    type="button"
+                                    class="search-clear hidden"
+                                    aria-label="Очистить поиск по истории"
+                                >×</button>
+                            </div>
+                            <div id="historySearchInfo" class="search-info"></div>
+                        </div>
+
+                        <div class="table-wrapper">
+
+                            <table id="historyTable">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th id="historyStudentHeader">
+                                            ЖИЛЕЦ
+                                        </th>
+
+                                        <th id="historyRoomHeader">
+                                            КОМНАТА
+                                        </th>
+
+                                        <th>
+                                            ЧАСЫ
+                                        </th>
+
+                                        <th>
+                                            ТИП
+                                        </th>
+
+                                        <th>
+                                            ПРИЧИНА
+                                        </th>
+
+                                        <th>
+                                            ДАТА
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody id="historyTableBody">
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================= LOGIN MODAL ================= -->
+
+<div
+    id="loginModal"
+    class="modal hidden"
+>
+
+    <div class="modal-overlay"></div>
+
+    <div class="modal-card">
+
+        <button
+            id="closeLoginModal"
+            class="modal-close"
+            type="button"
+        >
+            ×
+        </button>
+
+
+        <div class="modal-icon">
+            🔐
+        </div>
+
+        <h2>
+            Вход в систему
+        </h2>
+
+        <p class="modal-description">
+            Введите ник и пароль.
+        </p>
+
+
+        <form id="loginForm">
+
+            <div class="form-group">
+
+                <label for="loginNickname">
+                    Ник
+                </label>
+
+                <input
+                    id="loginNickname"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="Ваш ник"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="loginPassword">
+                    Пароль
+                </label>
+
+                <input
+                    id="loginPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Ваш пароль"
+                    required
+                >
+
+            </div>
+
+
+            <div
+                id="loginError"
+                class="login-error"
+            ></div>
+
+
+            <button
+                type="submit"
+                class="btn btn-primary btn-full"
+            >
+                Войти
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<div id="accountSettingsModal" class="modal hidden">
+ <div class="modal-overlay" id="accountSettingsOverlay"></div>
+ <div class="modal-card">
+  <button class="modal-close" id="closeAccountSettings">×</button>
+  <div class="modal-icon">⚙️</div>
+  <h2>Настройки аккаунта</h2>
+  <p>Ник можно изменить только 2 раза, пароль можно изменить только 2 раза.</p>
+  <div class="form-group"><label>Новый ник</label><input id="newAccountNickname"></div>
+  <div class="form-group"><label>Новый пароль</label><input id="newAccountPassword" type="password"></div>
+  <button id="saveAccountSettings" class="btn btn-primary">Сохранить</button>
+  <div id="accountSettingsMessage" class="form-message"></div>
+ </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
