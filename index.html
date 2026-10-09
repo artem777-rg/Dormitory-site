@@ -870,6 +870,24 @@
  </div>
 </div>
 
+
+<div id="minesweeperModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay" id="minesweeperOverlay"></div>
+    <section class="modal-card minesweeper-card" role="dialog" aria-modal="true" aria-labelledby="minesweeperTitle">
+        <button type="button" class="modal-close" id="closeMinesweeper" aria-label="Закрыть">×</button>
+        <div class="modal-icon">💣</div>
+        <h2 id="minesweeperTitle">Сапёр</h2>
+        <p class="minesweeper-subtitle">Найди все безопасные клетки. ПКМ или удержание на телефоне — поставить флажок.</p>
+        <div class="minesweeper-toolbar">
+            <span>🚩 <strong id="minesweeperFlags">0 / 10</strong></span>
+            <span class="minesweeper-status" id="minesweeperStatus" aria-live="polite">Удачи!</span>
+        </div>
+        <div id="minesweeperBoard" class="minesweeper-board" aria-label="Поле сапёра"></div>
+        <button type="button" class="btn btn-primary" id="minesweeperRestart">Новая игра</button>
+        <p class="minesweeper-help" style="margin-top:12px">Секрет найден: kanareika 🐤</p>
+    </section>
+</div>
+
 <script src="script.js"></script>
 
 </body>
