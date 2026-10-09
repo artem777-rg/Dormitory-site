@@ -2956,10 +2956,17 @@ if(accountSettingsBtn){
     const closeButton = document.getElementById("closeMinesweeper");
     const overlay = document.getElementById("minesweeperOverlay");
     const restartButton = document.getElementById("minesweeperRestart");
+    const difficultySelect = document.getElementById("minesweeperDifficulty");
     if (!modal || !boardElement) return;
 
-    const SIZE = 9;
-    const MINES = 10;
+    const LEVELS = {
+        beginner: { rows: 9, cols: 9, mines: 10 },
+        easy:     { rows: 9, cols: 9, mines: 15 },
+        medium:   { rows: 16, cols: 16, mines: 40 },
+        hard:     { rows: 16, cols: 30, mines: 99 },
+        expert:   { rows: 24, cols: 30, mines: 180 }
+    };
+    let rows = 16, cols = 16, mineCount = 40;
     let cells = [];
     let gameOver = false;
     let flags = 0;
@@ -2972,8 +2979,6 @@ if(accountSettingsBtn){
     function closeGame() {
         modal.classList.add("hidden");
         modal.setAttribute("aria-hidden", "true");
-
-        // Clear the secret word from search so it can be entered again immediately.
         const searchInput = document.getElementById("studentSearch");
         if (searchInput && searchInput.value.trim().toLocaleLowerCase() === "kanareika") {
             searchInput.value = "";
@@ -2981,35 +2986,45 @@ if(accountSettingsBtn){
         }
     }
     function neighbors(index) {
-        const row = Math.floor(index / SIZE), col = index % SIZE;
+        const row = Math.floor(index / cols), col = index % cols;
         const result = [];
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
             if (!dr && !dc) continue;
             const r = row + dr, c = col + dc;
-            if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) result.push(r * SIZE + c);
+            if (r >= 0 && r < rows && c >= 0 && c < cols) result.push(r * cols + c);
         }
         return result;
     }
     function startGame() {
-        cells = Array.from({ length: SIZE * SIZE }, () => ({ mine: false, revealed: false, flagged: false, count: 0 }));
+        const level = LEVELS[difficultySelect?.value] || LEVELS.medium;
+        rows = level.rows; cols = level.cols; mineCount = level.mines;
+        cells = Array.from({ length: rows * cols }, () => ({ mine: false, revealed: false, flagged: false, count: 0 }));
         gameOver = false; flags = 0;
         let placed = 0;
-        while (placed < MINES) {
+        while (placed < mineCount) {
             const i = Math.floor(Math.random() * cells.length);
             if (!cells[i].mine) { cells[i].mine = true; placed++; }
         }
         cells.forEach((cell, i) => { cell.count = neighbors(i).filter(n => cells[n].mine).length; });
         statusElement.textContent = "Удачи!";
+        boardElement.style.setProperty("--mine-cols", cols);
+        // Keep small boards compact; expand only for wider difficulties.
+        const boardWidth = cols <= 9 ? "360px" : cols <= 16 ? "560px" : "1120px";
+        boardElement.style.width = `min(100%, ${boardWidth})`;
+        boardElement.dataset.size = cols > 20 ? "wide" : "normal";
+        boardElement.setAttribute("aria-label", `Поле сапёра ${rows} на ${cols}`);
         render();
     }
     function render(showAllMines = false) {
         boardElement.innerHTML = "";
-        flagsElement.textContent = `${flags} / ${MINES}`;
+        boardElement.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+        boardElement.style.minWidth = "0";
+        flagsElement.textContent = `${flags} / ${mineCount}`;
         cells.forEach((cell, i) => {
             const button = document.createElement("button");
             button.type = "button";
             button.className = "mine-cell";
-            button.setAttribute("aria-label", `Клетка ${Math.floor(i / SIZE) + 1}, ${i % SIZE + 1}`);
+            button.setAttribute("aria-label", `Клетка ${Math.floor(i / cols) + 1}, ${i % cols + 1}`);
             if (cell.flagged && !cell.revealed) {
                 button.textContent = "🚩"; button.classList.add("flagged");
             } else if (cell.revealed || (showAllMines && cell.mine)) {
@@ -3041,13 +3056,13 @@ if(accountSettingsBtn){
             if (cell.count === 0) neighbors(current).forEach(n => { if (!cells[n].revealed) stack.push(n); });
         }
         if (cells.every(cell => cell.mine || cell.revealed)) {
-            gameOver = true; statusElement.textContent = "Победа! Все мины найдены 🎉";
+            gameOver = true; statusElement.textContent = "Победа! Все безопасные клетки открыты 🎉";
         }
         render();
     }
     function toggleFlag(index) {
         if (gameOver || cells[index].revealed) return;
-        if (!cells[index].flagged && flags >= MINES) return;
+        if (!cells[index].flagged && flags >= mineCount) return;
         cells[index].flagged = !cells[index].flagged;
         flags += cells[index].flagged ? 1 : -1;
         render();
@@ -3055,5 +3070,25 @@ if(accountSettingsBtn){
     closeButton?.addEventListener("click", closeGame);
     overlay?.addEventListener("click", closeGame);
     restartButton?.addEventListener("click", startGame);
+    const levelCards = document.querySelectorAll(".mine-level-card");
+    levelCards.forEach(card => card.addEventListener("click", () => {
+        if (!difficultySelect) return;
+        difficultySelect.value = card.dataset.level;
+        levelCards.forEach(item => {
+            const selected = item === card;
+            item.classList.toggle("is-selected", selected);
+            item.setAttribute("aria-pressed", String(selected));
+        });
+        startGame();
+    }));
+    levelCards.forEach(card => card.setAttribute("aria-pressed", String(card.dataset.level === (difficultySelect?.value || "medium"))));
+    difficultySelect?.addEventListener("change", () => {
+        levelCards.forEach(card => {
+            const selected = card.dataset.level === difficultySelect.value;
+            card.classList.toggle("is-selected", selected);
+            card.setAttribute("aria-pressed", String(selected));
+        });
+        startGame();
+    });
     document.addEventListener("keydown", event => { if (event.key === "Escape" && !modal.classList.contains("hidden")) closeGame(); });
 })();
