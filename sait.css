@@ -344,6 +344,13 @@ button {
     padding-bottom: 4px;
 }
 
+.students-collapse-toggle {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 13px;
+    padding: 9px 13px;
+}
+
 .admin-card {
     padding: 22px;
 
@@ -1676,3 +1683,38 @@ body.light-theme .file-picker-copy small { color: #65708c; }
 
 /* Minesweeper performance and mobile touch behavior */
 .mine-cell { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+
+/* Tabs: residents and work-hour history */
+.data-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 7px;
+    border: 1px solid #303b69;
+    border-radius: 16px;
+    background: rgba(10, 15, 33, 0.82);
+}
+.data-tab {
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 11px 18px;
+    color: #cbd5f5;
+    background: transparent;
+    font-weight: 800;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.data-tab:hover { transform: translateY(-1px); background: rgba(117, 76, 255, .12); }
+.data-tab.active {
+    color: #fff;
+    background: linear-gradient(135deg, #7852ff, #5030d7);
+    border-color: rgba(174, 151, 255, .45);
+    box-shadow: 0 6px 18px rgba(88, 57, 220, .22);
+}
+.history-section { margin-top: 14px; }
+.history-section .history-content { margin-top: 0; }
+body.light-theme .data-tabs { background: #f2f5ff; border-color: #d5dcf4; }
+body.light-theme .data-tab { color: #445071; }
+body.light-theme .data-tab.active { color: #fff; }
+@media (max-width: 600px) { .data-tabs { display: grid; grid-template-columns: 1fr 1fr; } .data-tab { padding: 10px 8px; font-size: 13px; } }
