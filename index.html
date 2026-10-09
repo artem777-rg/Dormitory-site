@@ -878,6 +878,19 @@
         <div class="modal-icon">💣</div>
         <h2 id="minesweeperTitle">Сапёр</h2>
         <p class="minesweeper-subtitle">Найди все безопасные клетки. ПКМ или удержание на телефоне — поставить флажок.</p>
+        <div class="minesweeper-level-section">
+            <div class="minesweeper-level-heading">ВЫБЕРИ СВОЙ УРОВЕНЬ</div>
+            <div class="minesweeper-levels" id="minesweeperLevels" role="group" aria-label="Уровень сложности">
+                <button type="button" class="mine-level-card" data-level="beginner"><span class="mine-level-emoji">🌱</span><span class="mine-level-name">Новичок</span><span class="mine-level-meta">9 × 9 · 10 мин</span><span class="mine-level-desc">Для разогрева</span></button>
+                <button type="button" class="mine-level-card" data-level="easy"><span class="mine-level-emoji">🙂</span><span class="mine-level-name">Лёгкий</span><span class="mine-level-meta">9 × 9 · 15 мин</span><span class="mine-level-desc">Чуть сложнее</span></button>
+                <button type="button" class="mine-level-card is-selected" data-level="medium"><span class="mine-level-emoji">⚡</span><span class="mine-level-name">Средний</span><span class="mine-level-meta">16 × 16 · 40 мин</span><span class="mine-level-desc">Золотая середина</span></button>
+                <button type="button" class="mine-level-card" data-level="hard"><span class="mine-level-emoji">🔥</span><span class="mine-level-name">Сложный</span><span class="mine-level-meta">16 × 30 · 99 мин</span><span class="mine-level-desc">Для опытных</span></button>
+                <button type="button" class="mine-level-card mine-level-extreme" data-level="expert"><span class="mine-level-emoji">💀</span><span class="mine-level-name">ЭКСТРИМ</span><span class="mine-level-meta">24 × 30 · 180 мин</span><span class="mine-level-desc">На свой страх и риск</span></button>
+            </div>
+            <select id="minesweeperDifficulty" class="minesweeper-difficulty" aria-label="Уровень сложности" tabindex="-1">
+                <option value="beginner">Новичок</option><option value="easy">Лёгкий</option><option value="medium" selected>Средний</option><option value="hard">Сложный</option><option value="expert">ЭКСТРИМ</option>
+            </select>
+        </div>
         <div class="minesweeper-toolbar">
             <span>🚩 <strong id="minesweeperFlags">0 / 10</strong></span>
             <span class="minesweeper-status" id="minesweeperStatus" aria-live="polite">Удачи!</span>
