@@ -1598,3 +1598,25 @@ body.light-theme .file-picker-copy small { color: #65708c; }
 @media(max-width:600px){.telegram-connect-card .telegram-actions,.telegram-connect-card .telegram-actions .btn{width:100%}}
 
 .account-settings-btn{}
+
+/* =========================================================
+   SECRET MINESWEEPER EASTER EGG
+========================================================= */
+.minesweeper-card {
+    width: min(560px, 100%);
+    max-height: min(92vh, 850px);
+    overflow-y: auto;
+    text-align: center;
+}
+.minesweeper-subtitle { color: #aeb9e4; margin: 0 0 16px; }
+.minesweeper-toolbar { display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin: 14px 0; }
+.minesweeper-status { color:#f3f5ff; font-weight:700; min-height:24px; }
+.minesweeper-board { display:grid; grid-template-columns:repeat(9,minmax(0,1fr)); gap:4px; width:min(100%,390px); margin: 0 auto 18px; }
+.mine-cell { aspect-ratio:1; min-width:0; padding:0; border:1px solid #526293; border-radius:6px; background:linear-gradient(145deg,#394879,#222e53); color:#fff; font-weight:800; font-size:clamp(13px,3vw,19px); cursor:pointer; box-shadow:inset 0 1px 0 #ffffff18; }
+.mine-cell:hover:not(:disabled) { filter:brightness(1.25); }
+.mine-cell:disabled { cursor:default; }
+.mine-cell.revealed { background:#e4e9f7; border-color:#c3cce4; color:#18203a; box-shadow:none; }
+.mine-cell.mine-hit { background:#ff7777; border-color:#ffaaaa; }
+.mine-cell.flagged { color:#ffda75; }
+.minesweeper-help { color:#98a5ce; font-size:13px; margin: 0; }
+@media (max-width:480px) { .minesweeper-card { padding:24px 12px 18px; } .minesweeper-board { gap:3px; } .mine-cell { border-radius:4px; } }
