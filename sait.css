@@ -1673,3 +1673,6 @@ body.light-theme .file-picker-copy small { color: #65708c; }
   .minesweeper-board[data-size="wide"] .mine-cell { font-size: clamp(5px, 1.5vw, 9px); }
   .mine-cell { border-radius: 1px; }
 }
+
+/* Minesweeper performance and mobile touch behavior */
+.mine-cell { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
