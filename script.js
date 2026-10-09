@@ -2977,6 +2977,9 @@ if(accountSettingsBtn){
         startGame();
     };
     function closeGame() {
+        if (pendingTap) clearTimeout(pendingTap.timer);
+        pendingTap = null;
+        clearTimeout(longPressTimer);
         modal.classList.add("hidden");
         modal.setAttribute("aria-hidden", "true");
         const searchInput = document.getElementById("studentSearch");
@@ -2996,6 +2999,9 @@ if(accountSettingsBtn){
         return result;
     }
     function startGame() {
+        if (pendingTap) clearTimeout(pendingTap.timer);
+        pendingTap = null;
+        clearTimeout(longPressTimer);
         const level = LEVELS[difficultySelect?.value] || LEVELS.medium;
         rows = level.rows; cols = level.cols; mineCount = level.mines;
         cells = Array.from({ length: rows * cols }, () => ({ mine: false, revealed: false, flagged: false, count: 0 }));
@@ -3015,57 +3021,144 @@ if(accountSettingsBtn){
         boardElement.setAttribute("aria-label", `Поле сапёра ${rows} на ${cols}`);
         render();
     }
+    // Reuse existing cell buttons: updating one move must not rebuild the whole board.
+    let cellButtons = [];
+    let pendingTap = null;
+    let lastTouchCell = -1;
+    let lastTouchTime = 0;
+    let suppressClickUntil = 0;
+    let longPressTimer = null;
+    let longPressTriggered = false;
+
     function render(showAllMines = false) {
-        boardElement.innerHTML = "";
         boardElement.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
         boardElement.style.minWidth = "0";
         flagsElement.textContent = `${flags} / ${mineCount}`;
-        cells.forEach((cell, i) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "mine-cell";
-            button.setAttribute("aria-label", `Клетка ${Math.floor(i / cols) + 1}, ${i % cols + 1}`);
-            if (cell.flagged && !cell.revealed) {
-                button.textContent = "🚩"; button.classList.add("flagged");
-            } else if (cell.revealed || (showAllMines && cell.mine)) {
-                button.classList.add("revealed");
-                if (cell.mine) { button.textContent = "💣"; if (cell.revealed) button.classList.add("mine-hit"); }
-                else if (cell.count) { button.textContent = cell.count; button.style.color = ["", "#2563eb", "#15803d", "#dc2626", "#6d28d9", "#b45309", "#0e7490", "#111827", "#475569"][cell.count]; }
+        const needsRebuild = cellButtons.length !== cells.length;
+        if (needsRebuild) {
+            boardElement.replaceChildren();
+            cellButtons = cells.map((cell, i) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "mine-cell";
+                button.setAttribute("aria-label", `Клетка ${Math.floor(i / cols) + 1}, ${i % cols + 1}`);
+                button.dataset.index = String(i);
+                button.addEventListener("click", event => handleCellClick(i, event));
+                button.addEventListener("contextmenu", event => { event.preventDefault(); toggleFlag(i); });
+                // Long press is an additional mobile option; double tap is supported too.
+                button.addEventListener("pointerdown", event => {
+                    if (event.pointerType !== "touch") return;
+                    longPressTriggered = false;
+                    clearTimeout(longPressTimer);
+                    longPressTimer = setTimeout(() => {
+                        longPressTriggered = true;
+                        suppressClickUntil = Date.now() + 700;
+                        toggleFlag(i);
+                    }, 500);
+                }, { passive: true });
+                const stopLongPress = () => clearTimeout(longPressTimer);
+                button.addEventListener("pointerup", stopLongPress, { passive: true });
+                button.addEventListener("pointercancel", stopLongPress, { passive: true });
+                button.addEventListener("pointerleave", stopLongPress, { passive: true });
+                boardElement.appendChild(button);
+                return button;
+            });
+        }
+        for (let i = 0; i < cells.length; i++) updateCell(i, showAllMines);
+    }
+
+    function updateCell(index, showAllMines = false) {
+        const button = cellButtons[index];
+        if (!button) return;
+        const cell = cells[index];
+        button.className = "mine-cell";
+        button.textContent = "";
+        button.style.color = "";
+        if (cell.flagged && !cell.revealed) {
+            button.textContent = "🚩";
+            button.classList.add("flagged");
+        } else if (cell.revealed || (showAllMines && cell.mine)) {
+            button.classList.add("revealed");
+            if (cell.mine) {
+                button.textContent = "💣";
+                if (cell.revealed) button.classList.add("mine-hit");
+            } else if (cell.count) {
+                button.textContent = cell.count;
+                button.style.color = ["", "#2563eb", "#15803d", "#dc2626", "#6d28d9", "#b45309", "#0e7490", "#111827", "#475569"][cell.count];
             }
-            button.disabled = gameOver || cell.revealed;
-            button.addEventListener("click", () => reveal(i));
-            button.addEventListener("contextmenu", event => { event.preventDefault(); toggleFlag(i); });
-            let holdTimer;
-            button.addEventListener("touchstart", () => { holdTimer = setTimeout(() => { toggleFlag(i); holdTimer = null; }, 450); }, { passive: true });
-            button.addEventListener("touchend", () => { if (holdTimer) clearTimeout(holdTimer); }, { passive: true });
-            boardElement.appendChild(button);
-        });
+        }
+        button.disabled = gameOver || cell.revealed;
+        button.setAttribute("aria-label", `Клетка ${Math.floor(index / cols) + 1}, ${index % cols + 1}${cell.flagged ? ", флажок" : cell.revealed ? ", открыта" : ""}`);
+    }
+
+    function handleCellClick(index, event) {
+        if (Date.now() < suppressClickUntil || longPressTriggered) {
+            longPressTriggered = false;
+            return;
+        }
+        // Mouse clicks reveal immediately. Touch taps wait briefly so a second tap can flag.
+        if (event.detail === 0 || !('ontouchstart' in window && event.pointerType !== "mouse")) {
+            reveal(index);
+            return;
+        }
+        const now = Date.now();
+        if (pendingTap && pendingTap.index === index && now - pendingTap.time < 320) {
+            clearTimeout(pendingTap.timer);
+            pendingTap = null;
+            lastTouchCell = -1;
+            lastTouchTime = 0;
+            suppressClickUntil = now + 450;
+            toggleFlag(index);
+            return;
+        }
+        if (pendingTap) {
+            clearTimeout(pendingTap.timer);
+            reveal(pendingTap.index);
+        }
+        const timer = setTimeout(() => {
+            if (pendingTap && pendingTap.index === index) {
+                pendingTap = null;
+                reveal(index);
+            }
+        }, 300);
+        pendingTap = { index, time: now, timer };
+        lastTouchCell = index;
+        lastTouchTime = now;
     }
     function reveal(index) {
         if (gameOver || cells[index].revealed || cells[index].flagged) return;
         if (cells[index].mine) {
-            cells[index].revealed = true; gameOver = true;
+            cells[index].revealed = true;
+            gameOver = true;
             statusElement.textContent = "Бум! Попробуй ещё раз.";
-            render(true); return;
+            cells.forEach((cell, i) => updateCell(i, true));
+            return;
         }
         const stack = [index];
+        const changed = new Set();
         while (stack.length) {
             const current = stack.pop(), cell = cells[current];
             if (cell.revealed || cell.flagged || cell.mine) continue;
             cell.revealed = true;
-            if (cell.count === 0) neighbors(current).forEach(n => { if (!cells[n].revealed) stack.push(n); });
+            changed.add(current);
+            if (cell.count === 0) neighbors(current).forEach(n => {
+                if (!cells[n].revealed && !cells[n].flagged && !cells[n].mine) stack.push(n);
+            });
         }
         if (cells.every(cell => cell.mine || cell.revealed)) {
-            gameOver = true; statusElement.textContent = "Победа! Все безопасные клетки открыты 🎉";
+            gameOver = true;
+            statusElement.textContent = "Победа! Все безопасные клетки открыты 🎉";
         }
-        render();
+        changed.forEach(i => updateCell(i));
     }
+
     function toggleFlag(index) {
-        if (gameOver || cells[index].revealed) return;
+        if (gameOver || !cells[index] || cells[index].revealed) return;
         if (!cells[index].flagged && flags >= mineCount) return;
         cells[index].flagged = !cells[index].flagged;
         flags += cells[index].flagged ? 1 : -1;
-        render();
+        flagsElement.textContent = `${flags} / ${mineCount}`;
+        updateCell(index);
     }
     closeButton?.addEventListener("click", closeGame);
     overlay?.addEventListener("click", closeGame);
