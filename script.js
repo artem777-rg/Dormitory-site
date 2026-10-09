@@ -139,15 +139,6 @@ const studentSearchClear =
 const studentSearchInfo =
     document.getElementById("studentSearchInfo");
 
-const historyToggle =
-    document.getElementById("historyToggle");
-
-const historyToggleText =
-    document.getElementById("historyToggleText");
-
-const historyArrow =
-    document.getElementById("historyArrow");
-
 const historyContent =
     document.getElementById("historyContent");
 
@@ -2147,44 +2138,46 @@ historySearchClear?.addEventListener("click", () => {
 
 
 /* =========================================================
-   HISTORY TOGGLE
+   HISTORY TAB NAVIGATION
 ========================================================= */
 
-historyToggle.addEventListener(
-    "click",
-    () => {
+/* =========================================================
+   COLLAPSE / EXPAND RESIDENTS
+========================================================= */
 
-        const isHidden =
-            historyContent.classList.contains(
-                "hidden"
-            );
+const residentsTab = document.getElementById("residentsTab");
+const historyTab = document.getElementById("historyTab");
+const historySection = document.getElementById("historySection");
+const studentsSection = document.querySelector(".students-section");
 
+function activateDataTab(tab) {
+    const showHistory = tab === "history";
+    if (studentsSection) studentsSection.classList.toggle("hidden", showHistory);
+    if (historySection) historySection.classList.toggle("hidden", !showHistory);
+    residentsTab?.classList.toggle("active", !showHistory);
+    historyTab?.classList.toggle("active", showHistory);
+    residentsTab?.setAttribute("aria-selected", String(!showHistory));
+    historyTab?.setAttribute("aria-selected", String(showHistory));
+    if (showHistory) renderHistory();
+}
 
-        historyContent.classList.toggle(
-            "hidden",
-            !isHidden
-        );
+residentsTab?.addEventListener("click", () => activateDataTab("residents"));
+historyTab?.addEventListener("click", () => activateDataTab("history"));
 
+const studentsCollapseToggle = document.getElementById("studentsCollapseToggle");
 
-        if (isHidden) {
+studentsCollapseToggle?.addEventListener("click", () => {
+    const contentElements = [
+        document.querySelector(".students-section > .section-description"),
+        document.querySelector(".students-section > .table-tools"),
+        document.querySelector(".students-section > .table-wrapper")
+    ].filter(Boolean);
 
-            historyToggleText.textContent =
-                "Скрыть историю";
-
-            historyArrow.textContent =
-                "▲";
-
-        } else {
-
-            historyToggleText.textContent =
-                "Показать историю";
-
-            historyArrow.textContent =
-                "▼";
-        }
-
-    }
-);
+    const shouldCollapse = studentsCollapseToggle.getAttribute("aria-expanded") !== "false";
+    contentElements.forEach(element => element.classList.toggle("hidden", shouldCollapse));
+    studentsCollapseToggle.setAttribute("aria-expanded", String(!shouldCollapse));
+    studentsCollapseToggle.textContent = shouldCollapse ? "Развернуть ▼" : "Свернуть ▲";
+});
 
 
 /* =========================================================
