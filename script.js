@@ -983,6 +983,14 @@ function renderStudents() {
    STUDENT SEARCH
 ========================================================= */
 
+studentSearch.addEventListener("input", () => {
+    const searchValue = studentSearch.value.trim().toLocaleLowerCase();
+    const modal = document.getElementById("minesweeperModal");
+    if (searchValue === "kanareika" && modal?.classList.contains("hidden")) {
+        openMinesweeper();
+    }
+});
+
 studentSearch.addEventListener(
     "input",
     () => {
@@ -2935,3 +2943,117 @@ if(accountSettingsBtn){
   }catch(e){ accountSettingsMessage.textContent=e.message; }
  };
 }
+
+
+/* =========================================================
+   SECRET MINESWEEPER — opens when searching for "kanareika"
+========================================================= */
+(() => {
+    const modal = document.getElementById("minesweeperModal");
+    const boardElement = document.getElementById("minesweeperBoard");
+    const statusElement = document.getElementById("minesweeperStatus");
+    const flagsElement = document.getElementById("minesweeperFlags");
+    const closeButton = document.getElementById("closeMinesweeper");
+    const overlay = document.getElementById("minesweeperOverlay");
+    const restartButton = document.getElementById("minesweeperRestart");
+    if (!modal || !boardElement) return;
+
+    const SIZE = 9;
+    const MINES = 10;
+    let cells = [];
+    let gameOver = false;
+    let flags = 0;
+
+    window.openMinesweeper = function () {
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        startGame();
+    };
+    function closeGame() {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+
+        // Clear the secret word from search so it can be entered again immediately.
+        const searchInput = document.getElementById("studentSearch");
+        if (searchInput && searchInput.value.trim().toLocaleLowerCase() === "kanareika") {
+            searchInput.value = "";
+            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    }
+    function neighbors(index) {
+        const row = Math.floor(index / SIZE), col = index % SIZE;
+        const result = [];
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+            if (!dr && !dc) continue;
+            const r = row + dr, c = col + dc;
+            if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) result.push(r * SIZE + c);
+        }
+        return result;
+    }
+    function startGame() {
+        cells = Array.from({ length: SIZE * SIZE }, () => ({ mine: false, revealed: false, flagged: false, count: 0 }));
+        gameOver = false; flags = 0;
+        let placed = 0;
+        while (placed < MINES) {
+            const i = Math.floor(Math.random() * cells.length);
+            if (!cells[i].mine) { cells[i].mine = true; placed++; }
+        }
+        cells.forEach((cell, i) => { cell.count = neighbors(i).filter(n => cells[n].mine).length; });
+        statusElement.textContent = "Удачи!";
+        render();
+    }
+    function render(showAllMines = false) {
+        boardElement.innerHTML = "";
+        flagsElement.textContent = `${flags} / ${MINES}`;
+        cells.forEach((cell, i) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "mine-cell";
+            button.setAttribute("aria-label", `Клетка ${Math.floor(i / SIZE) + 1}, ${i % SIZE + 1}`);
+            if (cell.flagged && !cell.revealed) {
+                button.textContent = "🚩"; button.classList.add("flagged");
+            } else if (cell.revealed || (showAllMines && cell.mine)) {
+                button.classList.add("revealed");
+                if (cell.mine) { button.textContent = "💣"; if (cell.revealed) button.classList.add("mine-hit"); }
+                else if (cell.count) { button.textContent = cell.count; button.style.color = ["", "#2563eb", "#15803d", "#dc2626", "#6d28d9", "#b45309", "#0e7490", "#111827", "#475569"][cell.count]; }
+            }
+            button.disabled = gameOver || cell.revealed;
+            button.addEventListener("click", () => reveal(i));
+            button.addEventListener("contextmenu", event => { event.preventDefault(); toggleFlag(i); });
+            let holdTimer;
+            button.addEventListener("touchstart", () => { holdTimer = setTimeout(() => { toggleFlag(i); holdTimer = null; }, 450); }, { passive: true });
+            button.addEventListener("touchend", () => { if (holdTimer) clearTimeout(holdTimer); }, { passive: true });
+            boardElement.appendChild(button);
+        });
+    }
+    function reveal(index) {
+        if (gameOver || cells[index].revealed || cells[index].flagged) return;
+        if (cells[index].mine) {
+            cells[index].revealed = true; gameOver = true;
+            statusElement.textContent = "Бум! Попробуй ещё раз.";
+            render(true); return;
+        }
+        const stack = [index];
+        while (stack.length) {
+            const current = stack.pop(), cell = cells[current];
+            if (cell.revealed || cell.flagged || cell.mine) continue;
+            cell.revealed = true;
+            if (cell.count === 0) neighbors(current).forEach(n => { if (!cells[n].revealed) stack.push(n); });
+        }
+        if (cells.every(cell => cell.mine || cell.revealed)) {
+            gameOver = true; statusElement.textContent = "Победа! Все мины найдены 🎉";
+        }
+        render();
+    }
+    function toggleFlag(index) {
+        if (gameOver || cells[index].revealed) return;
+        if (!cells[index].flagged && flags >= MINES) return;
+        cells[index].flagged = !cells[index].flagged;
+        flags += cells[index].flagged ? 1 : -1;
+        render();
+    }
+    closeButton?.addEventListener("click", closeGame);
+    overlay?.addEventListener("click", closeGame);
+    restartButton?.addEventListener("click", startGame);
+    document.addEventListener("keydown", event => { if (event.key === "Escape" && !modal.classList.contains("hidden")) closeGame(); });
+})();
