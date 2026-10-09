@@ -246,7 +246,7 @@
                             ➕ Добавить жильца
                         </h2>
 
-                        <form id="addStudentForm" class="form-grid">
+                        <form id="addStudentForm" class="form-grid" autocomplete="off">
 
                             <div class="form-group">
 
@@ -256,9 +256,12 @@
 
                                 <input
                                     id="addNickname"
+                                    name="new_student_nickname"
                                     type="text"
                                     maxlength="30"
-                                    autocomplete="off"
+                                    autocomplete="new-username"
+                                    readonly
+                                    onfocus="this.removeAttribute('readonly')"
                                     placeholder="Например: danila"
                                     required
                                 >
@@ -274,8 +277,12 @@
 
                                 <input
                                     id="addPassword"
+                                    name="new_student_password"
                                     type="password"
                                     minlength="6"
+                                    autocomplete="new-password"
+                                    readonly
+                                    onfocus="this.removeAttribute('readonly')"
                                     placeholder="Минимум 6 символов"
                                     required
                                 >
@@ -576,7 +583,8 @@
 
                     <div class="section-title">
                         <span>👥</span>
-                        Жильцы
+                        <span>Жильцы</span>
+                        <button id="studentsCollapseToggle" type="button" class="btn btn-secondary students-collapse-toggle" aria-expanded="true">Свернуть ▲</button>
                     </div>
 
                     <div class="section-description">
@@ -585,24 +593,6 @@
 
 
                     <div class="table-tools">
-
-                        <button
-                            id="historyToggle"
-                            type="button"
-                            class="btn btn-secondary"
-                        >
-
-                            <span id="historyToggleText">
-                                Показать историю
-                            </span>
-
-                            <span id="historyArrow">
-                                ▼
-                            </span>
-
-                        </button>
-
-
                         <div class="search-wrapper">
 
                             <span class="search-icon">
@@ -675,18 +665,23 @@
 
                     </div>
 
+                </section>
 
-                    <!-- ================= HISTORY ================= -->
+                <div class="data-tabs" role="tablist" aria-label="Разделы данных">
+                    <button type="button" class="data-tab active" id="residentsTab" role="tab" aria-selected="true">👥 Жильцы</button>
+                    <button type="button" class="data-tab" id="historyTab" role="tab" aria-selected="false">📜 История начислений</button>
+                </div>
 
-                    <div
+                <section id="historySection" class="students-section history-section hidden" aria-labelledby="historyTab">
+<div
                         id="historyContent"
-                        class="history-content hidden"
+                        class="history-content"
                     >
 
                         <div class="history-header">
 
                             <h2>
-                                История отработок
+                                История начислений
                             </h2>
 
                         </div>
@@ -754,7 +749,6 @@
                         </div>
 
                     </div>
-
                 </section>
 
             </section>
