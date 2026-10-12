@@ -2803,3 +2803,40 @@ body.custom-panels-active .leaderboard-owner-icon {
   background: color-mix(in srgb, var(--custom-panel-color) 84%, var(--custom-accent, #7c6cff) 16%) !important;
   border-color: color-mix(in srgb, var(--custom-panel-color) 70%, white) !important;
 }
+
+/* MOBILE FIX: prevent the left leaderboard/contact panel from becoming a full-height overlay */
+@media (max-width: 680px) {
+  html, body { max-width: 100%; overflow-x: clip; }
+  #mainContent, #mainContent.is-admin-dashboard,
+  .global-ranking-card, .top-leaderboard-layout,
+  .top-leaderboard-layout > *, .resident-workspace,
+  .resident-workspace > *, .workspace-card,
+  .notifications-card, .tasks-card,
+  .achievements-launcher-card { min-width: 0 !important; max-width: 100%; box-sizing: border-box; }
+  .top-leaderboard-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .top-leaderboard-layout .leaderboard-owner {
+    position: relative !important;
+    inset: auto !important;
+    float: none !important;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: auto !important;
+    padding: 12px !important;
+  }
+  .top-leaderboard-layout .top-dormitory-list { width: 100% !important; min-width: 0 !important; }
+  .top-leaderboard-layout .leaderboard-contact-footer { margin-top: 8px !important; }
+  #mainContent.is-admin-dashboard > .global-ranking-card,
+  #mainContent.is-admin-dashboard > .resident-workspace { grid-column: 1 !important; grid-row: auto !important; width: 100% !important; }
+  .resident-workspace { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; }
+}
