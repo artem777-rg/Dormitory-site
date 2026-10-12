@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <script>document.documentElement.classList.add("auth-pending");</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,6 +14,12 @@
 </head>
 
 <body>
+
+<div class="auth-loader" role="status" aria-live="polite" aria-label="Загрузка сайта">
+    <div class="auth-loader-spinner"></div>
+    <div class="auth-loader-title">Загружаем кабинет</div>
+    <div class="auth-loader-caption">Проверяем сохранённую сессию…</div>
+</div>
 
 <div class="app">
 
@@ -165,45 +172,66 @@
 
         <section id="mainContent" class="hidden">
 
-            <!-- ================= RESIDENT AREA ================= -->
-
-            <section class="section">
-
-                <div class="section-header">
-
-                    <div>
-                        <h1>
-                            Отработки жильцов
-                        </h1>
-
-                        <p>
-                            Учёт назначенных и выполненных часов
-                        </p>
-                    </div>
-
+            <!-- ================= GLOBAL RANKING ================= -->
+            <section class="top-dormitory-card global-ranking-card" aria-labelledby="topDormitoryTitle">
+                <div class="top-dormitory-heading">
+                    <div class="top-dormitory-icon">🏆</div>
+                    <div><p class="top-dormitory-kicker">303, 304 DEVELOPMENT TEAM</p><h2 id="topDormitoryTitle">Топ общежития</h2><p>Топ-5 по текущему долгу часов</p></div>
                 </div>
-
-
-                <!-- Необязательные уведомления Telegram: отображаются только жильцам -->
-                <section class="workspace-card telegram-connect-card hidden" id="telegramConnectCard" aria-live="polite">
-                    <div class="workspace-heading">
-                        <div><h2>✈️ Уведомления в Telegram</h2><p>Подключай по желанию. Без Telegram сайт продолжает работать как обычно.</p></div>
-                    </div>
-                    <p id="telegramConnectStatus" class="muted">Проверяем подключение…</p>
-                    <div class="telegram-actions">
-                        <button id="connectTelegramBtn" class="btn btn-primary" type="button">Подключить Telegram</button>
-                        <button id="disconnectTelegramBtn" class="btn btn-secondary hidden" type="button">Отключить Telegram</button>
-                    </div>
-                </section>
+                <div class="top-leaderboard-layout">
+                    <aside class="leaderboard-owner">
+                        <div class="leaderboard-contact-block developer-contact">
+                            <span class="leaderboard-owner-icon">✦</span>
+                            <span class="leaderboard-owner-label">Разработчик</span>
+                            <a href="https://t.me/Farto003" target="_blank" rel="noopener noreferrer">@Farto003</a>
+                            <span class="leaderboard-contact-note">Идеи, улучшения и развитие сайта</span>
+                        </div>
+                        <div class="leaderboard-contact-divider"></div>
+                        <div class="leaderboard-contact-block support-contact">
+                            <span class="leaderboard-owner-icon">🛠️</span>
+                            <span class="leaderboard-owner-label">Вопросы и баги</span>
+                            <a href="https://t.me/Farto003" target="_blank" rel="noopener noreferrer">@Farto003</a>
+                            <span class="leaderboard-contact-note">Нашёл ошибку? Напиши — разберёмся</span>
+                        </div>
+                        <div class="leaderboard-contact-footer">303 · 304<br>DEVELOPMENT TEAM</div>
+                    </aside>
+                    <div id="topDormitoryList" class="top-dormitory-list"><div class="top-empty">Загрузка рейтинга…</div></div>
+                </div>
+                <div id="myDormitoryRank" class="my-dormitory-rank"><span>Ваше место среди всех жильцов</span><strong>Загрузка…</strong></div>
+                <p class="top-dormitory-note">Рейтинг рассчитывается по текущему долгу: начислено часов минус выполнено. При одинаковом долге выше тот, у кого имя раньше по алфавиту.</p>
+            </section>
 
                 <!-- УВЕДОМЛЕНИЯ И ЗАДАНИЯ ДЛЯ ЖИЛЬЦОВ -->
                 <section class="resident-workspace">
+                    <nav class="resident-mobile-nav" id="residentMobileNav" aria-label="Быстрые разделы жильца">
+                        <div class="resident-mobile-nav-options" id="residentMobileNavOptions" aria-label="Выбери панель">
+                            <button type="button" class="resident-mobile-nav-btn active" data-mobile-view="notifications" aria-pressed="true">🔔 Уведомления</button>
+                            <button type="button" class="resident-mobile-nav-btn" data-mobile-view="tasks" aria-pressed="false">🧰 Бронирование</button>
+                            <button type="button" class="resident-mobile-nav-btn" data-mobile-view="achievements" aria-pressed="false">🏅 Достижения</button>
+                        </div>
+                    </nav>
                     <div class="workspace-card notifications-card">
                         <div class="workspace-heading">
-                            <div><h2>🔔 Уведомления</h2><p>Назначения, списания часов и новости о заданиях</p></div>
-                            <button id="markNotificationsRead" class="btn btn-secondary" type="button">Прочитать все</button>
+                            <div><h2>🔔 Уведомления</h2><p>Уведомления сайта и подключение Telegram</p></div>
                         </div>
-                        <div id="notificationsList" class="notifications-list"><p class="muted">Загрузка уведомлений…</p></div>
+                        <div class="notification-channel-tabs" role="tablist" aria-label="Каналы уведомлений">
+                            <button type="button" class="notification-channel-tab active" id="telegramNotificationsTab" role="tab" aria-selected="true">✈️ Telegram</button>
+                            <button type="button" class="notification-channel-tab" id="siteNotificationsTab" role="tab" aria-selected="false">🔔 На сайте</button>
+                        </div>
+                        <div id="siteNotificationsPane" class="notification-channel-pane hidden">
+                            <div class="notification-pane-actions"><span class="muted">Назначения, списания часов и новости о заданиях</span><button id="markNotificationsRead" class="btn btn-secondary" type="button">Прочитать все</button></div>
+                            <div id="notificationsList" class="notifications-list"><p class="muted">Загрузка уведомлений…</p></div>
+                        </div>
+                        <div id="telegramNotificationsPane" class="notification-channel-pane" role="tabpanel" aria-labelledby="telegramNotificationsTab">
+                            <section class="telegram-connect-card" id="telegramConnectCard" aria-live="polite">
+                                <p class="muted">Проверяем подключение…</p>
+                                <p id="telegramConnectStatus" class="muted">Проверяем подключение…</p>
+                                <div class="telegram-actions">
+                                    <button id="connectTelegramBtn" class="btn btn-primary" type="button">Подключить Telegram</button>
+                                    <button id="disconnectTelegramBtn" class="btn btn-secondary hidden" type="button">Отключить Telegram</button>
+                                </div>
+                            </section>
+                        </div>
                     </div>
                     <div class="workspace-card tasks-card">
                         <div class="workspace-heading">
@@ -212,30 +240,113 @@
                         </div>
                         <div id="residentTasksList" class="resident-tasks-list"><p class="muted">Загрузка заданий…</p></div>
                     </div>
+                    <div class="admin-card admin-tools-launcher-card">
+                        <h2>🛠️ Все функции администратора</h2>
+                        <p class="section-description">Управление жильцами, часами и Советом собрано в одной панели.</p>
+                        <button type="button" id="openAdminTools" class="btn btn-primary">Открыть панель управления</button>
+                    </div>
+
+                    <section id="residentExtrasLauncher" class="resident-extras-launcher achievements-launcher-card hidden">
+                        <div class="resident-extra-launcher-copy"><span class="resident-extra-kicker">ТВОИ РЕЗУЛЬТАТЫ</span><h2>🎖️ Достижения и бонусы</h2><p>Открывай награды за выполненные часы и следи за прогрессом.</p></div>
+                        <button type="button" id="openResidentExtras" class="btn btn-primary">Открыть достижения</button>
+                        <div class="achievement-launcher-decoration" aria-hidden="true">✦　🏅　✦</div>
+                    </section>
+                </section>
+
+                <!-- Разделы жильцов — в одном ряду сразу под уведомлениями и бронированием -->
+                <div class="data-tabs resident-top-data-tabs" role="tablist" aria-label="Разделы данных">
+                    <button type="button" class="data-tab active" id="residentsTab" role="tab" aria-selected="true">👥 Жильцы</button>
+                    <button type="button" class="data-tab" id="publicResidentsTab" role="tab" aria-selected="false">🏠 Все жильцы</button>
+                    <button type="button" class="data-tab" id="councilTab" role="tab" aria-selected="false">🌸 Совет общежития</button>
+                    <button type="button" class="data-tab" id="moopTab" role="tab" aria-selected="false">🔴 Представители МООП</button>
+                    <button type="button" class="data-tab" id="historyTab" role="tab" aria-selected="false">📜 История начислений</button>
+                </div>
+
+            <!-- ЛИЧНАЯ СТАТИСТИКА ЖИЛЬЦА -->
+            <section id="studentPersonalStats" class="student-stats-card hidden" aria-labelledby="studentStatsTitle">
+                <div class="student-stats-heading">
+                    <div><h2 id="studentStatsTitle">Моя статистика</h2><p>Твои часы за всё время и за текущий месяц</p></div>
+                    <div class="student-stats-icon">📊</div>
+                </div>
+                <div class="student-stats-grid">
+                    <article class="student-stat-tile"><span>Кол-во часов</span><strong id="personalDebt">0 ч.</strong><small>осталось отработать</small></article>
+                    <article class="student-stat-tile"><span>Выполнено всего</span><strong id="personalCompleted">0 ч.</strong><small>за всё время</small></article>
+                    <article class="student-stat-tile"><span>Начислено в этом месяце</span><strong id="monthAssigned">0 ч.</strong><small>с начала месяца</small></article>
+                    <article class="student-stat-tile"><span>Закрыто в этом месяце</span><strong id="monthCompleted">0 ч.</strong><small>с начала месяца</small></article>
+                </div>
+                <div class="student-stats-progress-wrap"><div class="student-stats-progress-label"><span>Общий прогресс закрытия часов</span><strong id="personalProgressLabel">0%</strong></div><div class="student-stats-progress"><span id="personalProgressBar"></span></div></div>
+            </section>
+
+            <!-- ================= RESIDENT AREA ================= -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <h1>Отработки жильцов</h1>
+                        <p>Учёт назначенных и выполненных часов</p>
+                    </div>
+
+                </div>
+
+
+
+
+                <section id="residentExtrasPanel" class="resident-extras-panel hidden" aria-label="Достижения и бонусы">
+                    <div class="resident-extras-header"><h2>🎖️ Достижения и бонусы</h2><button type="button" id="closeResidentExtras" class="btn btn-secondary">Закрыть ✕</button></div>
+                    <div class="resident-extras-tabs" role="tablist" aria-label="Личные разделы">
+                        <button type="button" class="resident-extras-tab active" id="achievementsTab" role="tab" aria-selected="true">🎖️ Достижения</button>
+                        <button type="button" class="resident-extras-tab" id="bonusesTab" role="tab" aria-selected="false">🎁 Бонусы</button>
+                    </div>
+                    <div id="achievementsPane" class="resident-extras-pane">
+<section class="achievements-card" id="achievementsSection" aria-labelledby="achievementsTitle">
+                    <div class="achievements-heading">
+                        <div class="achievements-heading-icon">🎖️</div>
+                        <div>
+                            <p class="achievements-kicker">МОИ РЕЗУЛЬТАТЫ</p>
+                            <h2 id="achievementsTitle">Достижения</h2>
+                            <p>Закрывай часы и открывай новые награды</p>
+                        </div>
+                    </div>
+                    <div class="achievement-summary">
+                        <div><span>Выполнено часов</span><strong id="achievementCompletedHours">0 ч.</strong></div>
+                        <div><span>Открыто наград</span><strong id="achievementUnlockedCount">0 из 7</strong></div>
+                    </div>
+                    <div class="achievement-grid" id="achievementGrid" aria-live="polite">
+                        <p class="achievement-empty">Загружаем достижения…</p>
+                    </div>
+                </section>
+                    </div>
+                    <div id="bonusesPane" class="resident-extras-pane hidden"><div class="bonuses-empty"><span>🎁</span><h3>Бонусы</h3><p>Здесь скоро появятся бонусы.</p></div></div>
                 </section>
 
                 <!-- ================= ADMIN ================= -->
 
                 <section id="adminPanel" class="admin-panel hidden">
 
-                    <div class="section-title">
-                        <span>⚙️</span>
-                        Панель администратора
+                    <div class="admin-card council-admin-card">
+                        <h2>🏛️ Управление Советом общежития</h2>
+                        <p class="section-description">Выбери жильца и назначь ему тег. Тег появится рядом с именем в списке Совета.</p>
+                        <form id="councilMemberForm" class="form-grid">
+                            <div class="form-group"><label for="councilStudentSelect">Жилец</label><select id="councilStudentSelect" required><option value="">Выбери жильца</option></select></div>
+                            <div class="form-group"><label for="councilMemberTag">Тег / должность</label><input id="councilMemberTag" maxlength="40" placeholder="Например: Председатель" required></div>
+                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Добавить в Совет</button></div>
+                        </form>
+                        <div id="councilAdminMessage" class="form-message" aria-live="polite"></div>
+                        <div class="table-wrapper"><table><thead><tr><th>ЖИЛЕЦ</th><th>ТЕГ</th><th>ДЕЙСТВИЕ</th></tr></thead><tbody id="councilAdminTableBody"><tr><td colspan="3" class="empty-cell">Загрузите список Совета</td></tr></tbody></table></div>
                     </div>
 
-                    <div class="admin-card publish-task-card">
-                        <h2>📣 Опубликовать задание для бронирования</h2>
-                        <p class="section-description">Задание появится у жильцов в списке свободных работ.</p>
-                        <form id="publishTaskForm" class="form-grid">
-                            <div class="form-group"><label for="publicTaskTitle">Название задания</label><input id="publicTaskTitle" maxlength="100" placeholder="Например: уборка кухни" required></div>
-                            <div class="form-group"><label for="publicTaskHours">Часы</label><input id="publicTaskHours" type="number" min="0.5" step="0.5" value="2" required></div>
-                            <div class="form-group"><label for="publicTaskCapacity">Сколько жильцов могут забронировать</label><input id="publicTaskCapacity" type="number" min="1" max="100" step="1" value="1" required><small class="field-hint">Каждому участнику будут зачтены часы задания.</small></div>
-                            <div class="form-group"><label for="publicTaskDetails">Описание / место / комментарий</label><input id="publicTaskDetails" maxlength="500" placeholder="Например: кухня на 3 этаже"></div>
-                            <div class="form-group"><label for="publicTaskDate">Дата выполнения (необязательно)</label><input id="publicTaskDate" type="date"></div>
-                            <div class="form-group"><label for="publicTaskTime">Время выполнения (необязательно)</label><input id="publicTaskTime" type="time"></div>
-                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Опубликовать задание</button></div>
+                    <div class="admin-card moop-admin-card">
+                        <h2>🔴 Добавление МООП</h2>
+                        <p class="section-description">Выбери жильца и укажи тег или должность представителя МООП.</p>
+                        <form id="moopMemberForm" class="form-grid">
+                            <div class="form-group"><label for="moopStudentSelect">Жилец</label><select id="moopStudentSelect" required><option value="">Выбери жильца</option></select></div>
+                            <div class="form-group"><label for="moopMemberTag">Тег / должность</label><input id="moopMemberTag" maxlength="40" placeholder="Например: Представитель МООП" required></div>
+                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Добавить в МООП</button></div>
                         </form>
-                        <div id="publishTaskMessage" class="form-message"></div>
+                        <div id="moopAdminMessage" class="form-message" aria-live="polite"></div>
+                        <div class="table-wrapper"><table><thead><tr><th>ЖИЛЕЦ</th><th>ТЕГ</th><th>ДЕЙСТВИЕ</th></tr></thead><tbody id="moopAdminTableBody"><tr><td colspan="3" class="empty-cell">Загрузите список представителей МООП</td></tr></tbody></table></div>
                     </div>
 
                     <!-- ADD STUDENT -->
@@ -251,7 +362,7 @@
                             <div class="form-group">
 
                                 <label for="addNickname">
-                                    Ник
+                                    Логин
                                 </label>
 
                                 <input
@@ -576,6 +687,60 @@
 
                 </section>
 
+                <div id="adminToolsModal" class="admin-tools-modal hidden" aria-hidden="true">
+                    <div class="admin-tools-backdrop" data-close-admin-tools></div>
+                    <section class="admin-tools-dialog" role="dialog" aria-modal="true" aria-labelledby="adminToolsTitle">
+                        <header class="admin-tools-modal-header">
+                            <div><span class="admin-tools-eyebrow">АДМИНИСТРИРОВАНИЕ</span><h2 id="adminToolsTitle">🛠️ Панель управления</h2></div>
+                            <button type="button" id="closeAdminTools" class="btn btn-secondary" aria-label="Закрыть панель управления">Закрыть ✕</button>
+                        </header>
+                        <nav class="admin-tools-tabs" role="tablist" aria-label="Функции администратора">
+                            <button type="button" class="admin-tools-tab active" role="tab" aria-selected="true" data-admin-tool-tab="residents">➕ Жильцы</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="assign">📋 Назначить часы</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="complete">✅ Выполнение</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="council">🏛️ Совет</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="moop">🔴 Представители МООП</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="publish">📣 Задания</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="events">📢 Мероприятия</button>
+                        </nav>
+                        <div class="admin-tools-tab-content" id="adminToolsResidentsPane" data-admin-tool-pane="residents"></div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsAssignPane" data-admin-tool-pane="assign"></div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsCompletePane" data-admin-tool-pane="complete"></div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsCouncilPane" data-admin-tool-pane="council"></div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsMoopPane" data-admin-tool-pane="moop"></div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsPublishPane" data-admin-tool-pane="publish">
+                    <div class="admin-card publish-task-card">
+                        <h2>📣 Опубликовать задание для бронирования</h2>
+                        <p class="section-description">Задание появится у жильцов в списке свободных работ.</p>
+                        <form id="publishTaskForm" class="form-grid">
+                            <div class="form-group"><label for="publicTaskTitle">Название задания</label><input id="publicTaskTitle" maxlength="100" placeholder="Например: уборка кухни" required></div>
+                            <div class="form-group"><label for="publicTaskHours">Часы</label><input id="publicTaskHours" type="number" min="0.5" step="0.5" value="2" required></div>
+                            <div class="form-group"><label for="publicTaskCapacity">Сколько жильцов могут забронировать</label><input id="publicTaskCapacity" type="number" min="1" max="100" step="1" value="1" required><small class="field-hint">Каждому участнику будут зачтены часы задания.</small></div>
+                            <div class="form-group"><label for="publicTaskDetails">Описание / место / комментарий</label><input id="publicTaskDetails" maxlength="500" placeholder="Например: кухня на 3 этаже"></div>
+                            <div class="form-group"><label for="publicTaskDate">Дата выполнения (необязательно)</label><input id="publicTaskDate" type="date"></div>
+                            <div class="form-group"><label for="publicTaskTime">Время выполнения (необязательно)</label><input id="publicTaskTime" type="time"></div>
+                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Опубликовать задание</button></div>
+                        </form>
+                        <div id="publishTaskMessage" class="form-message"></div>
+                    </div>
+
+                        </div>
+                        <div class="admin-tools-tab-content hidden" data-admin-tool-pane="events">
+                            <div class="admin-card publish-event-card">
+                                <h2>📢 Опубликовать мероприятие</h2>
+                                <p class="section-description">Мероприятие появится в уведомлениях на сайте и будет отправлено в Telegram жильцам, которые подключили бота.</p>
+                                <form id="publishEventForm" class="form-grid">
+                                    <div class="form-group form-full"><label for="eventTitle">Название мероприятия</label><input id="eventTitle" maxlength="120" placeholder="Например: Совет общежития" required></div>
+                                    <div class="form-group"><label for="eventDate">Дата</label><input id="eventDate" type="date" required></div>
+                                    <div class="form-group"><label for="eventTime">Время</label><input id="eventTime" type="time" required value="19:00"></div>
+                                    <div class="form-group form-full"><label for="eventDetails">Дополнительная информация</label><textarea id="eventDetails" rows="3" maxlength="1000" placeholder="Например: явка всем, место проведения — актовый зал"></textarea></div>
+                                    <div class="form-group form-full"><button class="btn btn-primary" type="submit">Опубликовать и уведомить всех</button></div>
+                                </form>
+                                <div id="publishEventMessage" class="form-message" role="status" aria-live="polite"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
 
                 <!-- ================= STUDENTS ================= -->
 
@@ -651,8 +816,10 @@
                                     </th>
 
                                     <th>
-                                        ДОЛГ
+                                        КОЛ-ВО ЧАСОВ
                                     </th>
+
+                                    <th class="resident-actions-heading" aria-label="Действия"></th>
 
                                 </tr>
 
@@ -667,10 +834,30 @@
 
                 </section>
 
-                <div class="data-tabs" role="tablist" aria-label="Разделы данных">
-                    <button type="button" class="data-tab active" id="residentsTab" role="tab" aria-selected="true">👥 Жильцы</button>
-                    <button type="button" class="data-tab" id="historyTab" role="tab" aria-selected="false">📜 История начислений</button>
-                </div>
+                <section id="publicResidentsSection" class="students-section public-residents-section hidden" aria-labelledby="publicResidentsTab">
+                    <div class="history-header history-header-collapsible"><div><h2>Жильцы общежития</h2><p class="section-description">Список комнат и жильцов. Часы и личные данные не отображаются.</p></div><button type="button" id="publicResidentsCollapseToggle" class="btn btn-secondary history-collapse-toggle" aria-expanded="true"><span id="publicResidentsCollapseLabel">Свернуть</span> <span id="publicResidentsCollapseIcon" aria-hidden="true">▲</span></button></div>
+                    <div id="publicResidentsCollapsibleContent">
+                    <div class="public-residents-search-wrap">
+                        <input type="search" id="publicResidentsSearch" class="public-residents-search" placeholder="Поиск по ФИО или комнате…" aria-label="Поиск жильца по ФИО или комнате" autocomplete="off">
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="publicResidentsTable">
+                            <thead><tr><th>КОМНАТА</th><th>ФИО</th></tr></thead>
+                            <tbody id="publicResidentsTableBody"><tr><td colspan="2" class="empty-cell">Загружаем список…</td></tr></tbody>
+                        </table>
+                    </div>
+                    </div>
+                </section>
+
+                <section id="councilSection" class="students-section council-section hidden" aria-labelledby="councilTab">
+                    <div class="council-intro"><span class="council-emblem">✦</span><div><h2>Совет общежития</h2><p>Знакомьтесь с участниками Совета и их ролями в жизни общежития.</p></div></div>
+                    <div id="councilRosterList" class="council-roster-list"><p class="empty-cell">Загружаем состав Совета…</p></div>
+                </section>
+
+                <section id="moopSection" class="students-section moop-section hidden" aria-labelledby="moopTab">
+                    <div class="council-intro moop-intro"><span class="council-emblem">●</span><div><h2>Представители МООП</h2><p>Список представителей МООП общежития.</p></div></div>
+                    <div id="moopRosterList" class="council-roster-list"><p class="empty-cell">Загружаем список представителей МООП…</p></div>
+                </section>
 
                 <section id="historySection" class="students-section history-section hidden" aria-labelledby="historyTab">
 <div
@@ -678,33 +865,18 @@
                         class="history-content"
                     >
 
-                        <div class="history-header">
-
-                            <h2>
-                                История начислений
-                            </h2>
-
+                        <div class="history-header history-header-collapsible">
+                            <h2>История начислений</h2>
+                            <button type="button" id="historyCollapseToggle" class="btn btn-secondary history-collapse-toggle" aria-expanded="true">
+                                <span id="historyCollapseLabel">Свернуть</span> <span id="historyCollapseIcon" aria-hidden="true">▲</span>
+                            </button>
                         </div>
-
-                        <div class="history-search-tools">
-                            <div class="search-wrapper">
-                                <span class="search-icon">🔎</span>
-                                <input
-                                    id="historySearch"
-                                    type="search"
-                                    placeholder="Поиск в истории по имени или фамилии..."
-                                    autocomplete="off"
-                                >
-                                <button
-                                    id="historySearchClear"
-                                    type="button"
-                                    class="search-clear hidden"
-                                    aria-label="Очистить поиск по истории"
-                                >×</button>
-                            </div>
-                            <div id="historySearchInfo" class="search-info"></div>
+                        <div id="historyCollapsibleContent">
+                        <div class="history-search-row">
+                            <input type="search" id="historySearch" class="history-search-input" placeholder="Поиск по жильцу, комнате, причине или типу…" aria-label="Поиск по истории начислений">
+                            <button type="button" id="historySearchClear" class="btn btn-secondary hidden">Очистить</button>
+                            <span id="historySearchInfo" class="history-search-info" aria-live="polite">Всего записей: 0</span>
                         </div>
-
                         <div class="table-wrapper">
 
                             <table id="historyTable">
@@ -746,6 +918,7 @@
 
                             </table>
 
+                        </div>
                         </div>
 
                     </div>
@@ -789,7 +962,7 @@
         </h2>
 
         <p class="modal-description">
-            Введите ник и пароль.
+            Введите логин и пароль.
         </p>
 
 
@@ -798,14 +971,14 @@
             <div class="form-group">
 
                 <label for="loginNickname">
-                    Ник
+                    Логин
                 </label>
 
                 <input
                     id="loginNickname"
                     type="text"
                     autocomplete="username"
-                    placeholder="Ваш ник"
+                    placeholder="Ваш логин"
                     required
                 >
 
@@ -856,8 +1029,8 @@
   <button class="modal-close" id="closeAccountSettings">×</button>
   <div class="modal-icon">⚙️</div>
   <h2>Настройки аккаунта</h2>
-  <p>Ник можно изменить только 2 раза, пароль можно изменить только 2 раза.</p>
-  <div class="form-group"><label>Новый ник</label><input id="newAccountNickname"></div>
+  <p>Логин можно изменить только 2 раза, пароль можно изменить только 2 раза.</p>
+  <div class="form-group"><label>Новый логин</label><input id="newAccountNickname"></div>
   <div class="form-group"><label>Новый пароль</label><input id="newAccountPassword" type="password"></div>
   <button id="saveAccountSettings" class="btn btn-primary">Сохранить</button>
   <div id="accountSettingsMessage" class="form-message"></div>
