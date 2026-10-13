@@ -271,6 +271,7 @@
                 <div class="student-stats-grid">
                     <article class="student-stat-tile"><span>Кол-во часов</span><strong id="personalDebt">0 ч.</strong><small>осталось отработать</small></article>
                     <article class="student-stat-tile"><span>Выполнено всего</span><strong id="personalCompleted">0 ч.</strong><small>за всё время</small></article>
+                    <article class="student-stat-tile immunity-stat-tile"><span>Иммунитет часов</span><strong id="personalImmunity">0 ч.</strong><small>защитит от новых начислений</small></article>
                     <article class="student-stat-tile"><span>Начислено в этом месяце</span><strong id="monthAssigned">0 ч.</strong><small>с начала месяца</small></article>
                     <article class="student-stat-tile"><span>Закрыто в этом месяце</span><strong id="monthCompleted">0 ч.</strong><small>с начала месяца</small></article>
                 </div>
@@ -325,6 +326,18 @@
 
                 <section id="adminPanel" class="admin-panel hidden">
 
+                    <div class="admin-card immunity-admin-card">
+                        <h2>🛡️ Управление иммунитетом часов</h2>
+                        <p class="section-description">Иммунитет уменьшает новые начисления: например, при иммунитете 5 ч. и начислении 10 ч. в долг попадёт только 5 ч., а иммунитет станет 0.</p>
+                        <form id="immunityForm" class="form-grid">
+                            <div class="form-group"><label for="immunityStudentSelect">Жилец</label><select id="immunityStudentSelect" required><option value="">Выбери жильца</option></select></div>
+                            <div class="form-group"><label for="immunityHours">Сколько часов иммунитета добавить</label><input id="immunityHours" type="number" min="0.5" step="0.5" required placeholder="Например: 5"></div>
+                            <div class="form-group form-full"><button class="btn btn-primary" type="submit">Добавить иммунитет</button></div>
+                        </form>
+                        <div id="immunityMessage" class="form-message" aria-live="polite"></div>
+                    </div>
+
+
                     <div class="admin-card council-admin-card">
                         <h2>🏛️ Управление Советом общежития</h2>
                         <p class="section-description">Выбери жильца и назначь ему тег. Тег появится рядом с именем в списке Совета.</p>
@@ -336,6 +349,8 @@
                         <div id="councilAdminMessage" class="form-message" aria-live="polite"></div>
                         <div class="table-wrapper"><table><thead><tr><th>ЖИЛЕЦ</th><th>ТЕГ</th><th>ДЕЙСТВИЕ</th></tr></thead><tbody id="councilAdminTableBody"><tr><td colspan="3" class="empty-cell">Загрузите список Совета</td></tr></tbody></table></div>
                     </div>
+
+
 
                     <div class="admin-card moop-admin-card">
                         <h2>🔴 Добавление МООП</h2>
@@ -702,6 +717,7 @@
                             <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="moop">🔴 Представители МООП</button>
                             <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="publish">📣 Задания</button>
                             <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="events">📢 Мероприятия</button>
+                            <button type="button" class="admin-tools-tab" role="tab" aria-selected="false" data-admin-tool-tab="immunity">🛡️ Иммунитет</button>
                         </nav>
                         <div class="admin-tools-tab-content" id="adminToolsResidentsPane" data-admin-tool-pane="residents"></div>
                         <div class="admin-tools-tab-content hidden" id="adminToolsAssignPane" data-admin-tool-pane="assign"></div>
@@ -725,6 +741,7 @@
                     </div>
 
                         </div>
+                        <div class="admin-tools-tab-content hidden" id="adminToolsImmunityPane" data-admin-tool-pane="immunity"></div>
                         <div class="admin-tools-tab-content hidden" data-admin-tool-pane="events">
                             <div class="admin-card publish-event-card">
                                 <h2>📢 Опубликовать мероприятие</h2>
@@ -818,6 +835,7 @@
                                     <th>
                                         КОЛ-ВО ЧАСОВ
                                     </th>
+                                    <th>ИММУНИТЕТ, Ч.</th>
 
                                     <th class="resident-actions-heading" aria-label="Действия"></th>
 
