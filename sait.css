@@ -2840,3 +2840,8 @@ body.custom-panels-active .leaderboard-owner-icon {
   #mainContent.is-admin-dashboard > .resident-workspace { grid-column: 1 !important; grid-row: auto !important; width: 100% !important; }
   .resident-workspace { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; }
 }
+
+/* Immunity hours panel */
+.immunity-admin-card .section-description { max-width: 900px; }
+.immunity-hours-cell { color: var(--success-color, #16a34a); font-weight: 700; }
+#immunityForm input, #immunityForm select { max-width: 100%; }
