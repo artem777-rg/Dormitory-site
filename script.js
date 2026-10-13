@@ -606,10 +606,8 @@ function showLoggedIn() {
         !isAdmin
     );
 
-    adminPanel.classList.toggle(
-        "hidden",
-        !isAdmin
-    );
+    // Админские инструменты открываются только через кнопку «Открыть панель управления»
+    adminPanel?.classList.add("hidden");
 
     syncDataTabsForRole();
 }
@@ -677,6 +675,7 @@ async function loadAllData() {
     updateStudentNavigation();
 
     populateResidentSelects();
+    populateImmunityStudentSelect();
 
     renderHistory();
 
@@ -720,6 +719,7 @@ function renderStudentPersonalStats() {
     const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
     setText("personalDebt", `${formatTopHours(debt)} ч.`);
     setText("personalCompleted", `${formatTopHours(completed)} ч.`);
+    setText("personalImmunity", `${formatTopHours(Number(currentProfile?.immunity_hours ?? students.find(x => x.id === currentUser.id)?.immunity_hours ?? 0))} ч.`);
     setText("monthAssigned", `${formatTopHours(monthAssigned)} ч.`);
     setText("monthCompleted", `${formatTopHours(monthCompleted)} ч.`);
     setText("personalProgressLabel", `${progress}%`);
@@ -990,7 +990,7 @@ function getStudentStats(studentId) {
     const records =
         workHours.filter(
             item =>
-                item.student_id === studentId
+                String(item.student_id) === String(studentId)
         );
 
 
@@ -1017,7 +1017,7 @@ function getStudentStats(studentId) {
     return {
         assigned,
         completed,
-        debt: assigned - completed
+        debt: Math.max(0, assigned - completed)
     };
 }
 
@@ -1096,7 +1096,7 @@ function renderStudents() {
 
         studentsTableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="empty-cell">
+                <td colspan="7" class="empty-cell">
                     Жильцы не найдены.
                 </td>
             </tr>
@@ -1168,6 +1168,7 @@ function renderStudents() {
             <td class="hours-cell ${debtClass}">
                 ${formatHours(Math.max(stats.debt, 0))}
             </td>
+            <td class="hours-cell immunity-hours-cell">${formatHours(Number(student.immunity_hours || 0))}</td>
 
             <td class="resident-actions-cell">
                 ${currentProfile?.role === "admin" && student.id !== currentUser?.id ? `
@@ -2025,6 +2026,86 @@ addStudentForm.addEventListener(
 
 
 /* =========================================================
+   IMMUNITY HOURS (admin)
+========================================================= */
+function populateImmunityStudentSelect() {
+    const select = document.getElementById("immunityStudentSelect");
+    if (!select) return;
+    const oldValue = select.value;
+    select.innerHTML = '<option value="">Выбери жильца</option>';
+    [...students].sort((a,b) => String(a.room || "").localeCompare(String(b.room || ""), "ru", {numeric:true})).forEach(student => {
+        const option = document.createElement("option");
+        option.value = student.id;
+        option.textContent = `${student.full_name || student.nickname || "Жилец"} — комната ${student.room || "—"} (иммунитет: ${Number(student.immunity_hours || 0)} ч.)`;
+        select.appendChild(option);
+    });
+    if (oldValue) select.value = oldValue;
+}
+
+const immunityForm = document.getElementById("immunityForm");
+if (immunityForm) immunityForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const message = document.getElementById("immunityMessage");
+    clearMessage(message);
+    if (currentProfile?.role !== "admin") { showMessage(message, "Недостаточно прав.", "error"); return; }
+    const studentId = document.getElementById("immunityStudentSelect").value;
+    const amount = Number(document.getElementById("immunityHours").value);
+    const student = students.find(x => String(x.id) === String(studentId));
+    if (!student) { showMessage(message, "Выберите жильца.", "error"); return; }
+    if (!Number.isFinite(amount) || amount <= 0) { showMessage(message, "Укажите количество часов больше нуля.", "error"); return; }
+    const button = immunityForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+        // Apply newly granted immunity to existing debt first. Only the unused
+        // remainder stays as immunity for future assignments.
+        const { data: freshStudent, error: studentError } = await supabaseClient
+            .from("students").select("id, immunity_hours").eq("id", studentId).single();
+        if (studentError) throw studentError;
+
+        const { data: records, error: recordsError } = await supabaseClient
+            .from("work_hours").select("hours, type").eq("student_id", studentId);
+        if (recordsError) throw recordsError;
+
+        let assigned = 0;
+        let completed = 0;
+        for (const record of (records || [])) {
+            const value = Number(record.hours || 0);
+            if (record.type === "assigned") assigned += value;
+            if (record.type === "completed") completed += value;
+        }
+        const currentDebt = Math.max(0, assigned - completed);
+        const currentImmunity = Math.max(0, Number(freshStudent.immunity_hours || 0));
+        const totalAvailable = currentImmunity + amount;
+        const debtCovered = Math.min(currentDebt, totalAvailable);
+        const remainingImmunity = Math.max(0, totalAvailable - debtCovered);
+
+        // Keep history/stats consistent by recording covered debt as completed hours.
+        if (debtCovered > 0) {
+            const { error: coverError } = await supabaseClient.from("work_hours").insert({
+                student_id: studentId,
+                hours: debtCovered,
+                reason: "Погашение иммунитетом",
+                type: "completed"
+            });
+            if (coverError) throw coverError;
+        }
+
+        const { error: updateError } = await supabaseClient.from("students")
+            .update({ immunity_hours: remainingImmunity }).eq("id", studentId);
+        if (updateError) throw updateError;
+
+        showMessage(message,
+            `Добавлено ${formatHours(amount)} ч. иммунитета. Долг погашен: ${formatHours(debtCovered)} ч. Остаток долга: ${formatHours(Math.max(0, currentDebt - debtCovered))} ч. Остаток иммунитета: ${formatHours(remainingImmunity)} ч.`,
+            "success");
+        immunityForm.reset();
+        await loadAllData();
+    } catch (error) {
+        console.error(error);
+        showMessage(message, "Не удалось добавить иммунитет. Проверь, что добавлена колонка immunity_hours в таблице students.", "error");
+    } finally { button.disabled = false; }
+});
+
+/* =========================================================
    ASSIGN HOURS
 ========================================================= */
 
@@ -2120,33 +2201,43 @@ assignHoursForm.addEventListener(
 
 
         try {
+            // Read the latest immunity directly from Supabase; the local students
+            // array can be stale if another admin changed the balance.
+            const { data: freshStudent, error: freshStudentError } = await supabaseClient
+                .from("students").select("id, immunity_hours").eq("id", studentId).single();
+            if (freshStudentError) throw freshStudentError;
 
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from("work_hours")
-                    .insert({
-                        student_id:
-                            studentId,
+            const availableImmunity = Math.max(0, Number(freshStudent?.immunity_hours ?? 0));
+            const immunityUsed = Math.min(availableImmunity, hours);
+            const effectiveHours = Math.max(0, hours - immunityUsed);
 
-                        hours,
+            // Consume immunity first, then add only the uncovered hours to the debt.
+            if (immunityUsed > 0) {
+                const { error: immunityError } = await supabaseClient.from("students")
+                    .update({ immunity_hours: Math.max(0, availableImmunity - immunityUsed) }).eq("id", studentId);
+                if (immunityError) throw immunityError;
+            }
 
-                        reason,
-
-                        type:
-                            "assigned"
-                    });
-
-
-            if (error) {
-                throw error;
+            if (effectiveHours > 0) {
+                const { error: insertError } = await supabaseClient.from("work_hours").insert({
+                    student_id: studentId, hours: effectiveHours, reason, type: "assigned"
+                });
+                if (insertError) {
+                    if (immunityUsed > 0) {
+                        const { error: rollbackError } = await supabaseClient.from("students")
+                            .update({ immunity_hours: availableImmunity }).eq("id", studentId);
+                        if (rollbackError) console.error("Не удалось восстановить иммунитет после ошибки начисления:", rollbackError);
+                    }
+                    throw insertError;
+                }
             }
 
 
             showMessage(
                 assignMessage,
-                "Отработка успешно назначена.",
+                immunityUsed > 0
+                    ? `Начислено ${formatHours(hours)} ч.; иммунитет погасил ${formatHours(immunityUsed)} ч. В долг добавлено ${formatHours(effectiveHours)} ч. Остаток иммунитета: ${formatHours(availableImmunity - immunityUsed)} ч.`
+                    : "Отработка успешно назначена.",
                 "success"
             );
 
@@ -2259,34 +2350,76 @@ completeHoursForm.addEventListener(
 
 
         try {
+            // Refresh the student's balance so completed hours beyond the current
+            // debt become immunity instead of disappearing into an over-completion.
+            const { data: freshStudent, error: studentError } = await supabaseClient
+                .from("students")
+                .select("id, immunity_hours")
+                .eq("id", studentId)
+                .single();
+            if (studentError) throw studentError;
 
-            const {
-                error
-            } =
-                await supabaseClient
+            const { data: records, error: recordsError } = await supabaseClient
+                .from("work_hours")
+                .select("hours, type")
+                .eq("student_id", studentId);
+            if (recordsError) throw recordsError;
+
+            let assigned = 0;
+            let alreadyCompleted = 0;
+            (records || []).forEach(record => {
+                const value = Math.max(0, Number(record.hours) || 0);
+                if (record.type === "assigned") assigned += value;
+                else if (record.type === "completed") alreadyCompleted += value;
+            });
+
+            const debtBefore = Math.max(0, assigned - alreadyCompleted);
+            const hoursAppliedToDebt = Math.min(hours, debtBefore);
+            const hoursToImmunity = Math.max(0, hours - hoursAppliedToDebt);
+            const oldImmunity = Math.max(0, Number(freshStudent.immunity_hours) || 0);
+
+            // Only the part that clears existing debt is logged as completed work.
+            if (hoursAppliedToDebt > 0) {
+                const { error: insertError } = await supabaseClient
                     .from("work_hours")
                     .insert({
-                        student_id:
-                            studentId,
-
-                        hours,
-
-                        reason:
-                            "Выполнение отработки",
-
-                        type:
-                            "completed"
+                        student_id: studentId,
+                        hours: hoursAppliedToDebt,
+                        reason: "Выполнение отработки",
+                        type: "completed"
                     });
-
-
-            if (error) {
-                throw error;
+                if (insertError) throw insertError;
             }
 
+            // Any extra completed hours are stored as immunity for future assignments.
+            if (hoursToImmunity > 0) {
+                const { error: immunityError } = await supabaseClient
+                    .from("students")
+                    .update({ immunity_hours: oldImmunity + hoursToImmunity })
+                    .eq("id", studentId);
+                if (immunityError) {
+                    // Roll back the completed-hours entry if the immunity update fails.
+                    if (hoursAppliedToDebt > 0) {
+                        const { error: rollbackError } = await supabaseClient
+                            .from("work_hours")
+                            .delete()
+                            .eq("student_id", studentId)
+                            .eq("type", "completed")
+                            .eq("reason", "Выполнение отработки")
+                            .order("created_at", { ascending: false })
+                            .limit(1);
+                        if (rollbackError) console.error("Не удалось откатить запись выполнения:", rollbackError);
+                    }
+                    throw immunityError;
+                }
+            }
 
+            const newDebt = Math.max(0, debtBefore - hoursAppliedToDebt);
             showMessage(
                 completeMessage,
-                "Выполнение успешно отмечено.",
+                hoursToImmunity > 0
+                    ? `Выполнение отмечено. Долг уменьшен на ${formatHours(hoursAppliedToDebt)} ч.; в иммунитет добавлено ${formatHours(hoursToImmunity)} ч. Новый долг: ${formatHours(newDebt)} ч.`
+                    : `Выполнение отмечено. Долг уменьшен на ${formatHours(hoursAppliedToDebt)} ч. Остаток долга: ${formatHours(newDebt)} ч.`,
                 "success"
             );
 
@@ -3922,7 +4055,8 @@ if(accountSettingsBtn){
     complete: cardFor('completeHoursForm'),
     council: cardFor('councilMemberForm'),
     moop: cardFor('moopMemberForm'),
-    publish: cardFor('publishTaskForm')
+    publish: cardFor('publishTaskForm'),
+    immunity: cardFor('immunityForm')
   };
   const panes = Object.fromEntries([...modal.querySelectorAll('[data-admin-tool-pane]')].map(el => [el.dataset.adminToolPane, el]));
   Object.entries(targets).forEach(([key, card]) => {
